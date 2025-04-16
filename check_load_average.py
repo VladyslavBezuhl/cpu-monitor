@@ -8,7 +8,7 @@ from datetime import datetime
 # Konfiguration
 BOT_ID = os.getenv("BOT_ID")
 CHAT_ID = os.getenv("CHAT_ID")
-LOG_FILE = "/home/jambo2/log/load_average.log"
+LOG_FILE = "/your/path/to/log/load_average.log" 
 SLEEP_INTERVAL = 10  # Intervall in Sekunden
 
 def get_load_average():
