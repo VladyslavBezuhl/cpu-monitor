@@ -1,59 +1,49 @@
 import requests
 import time
 import os
-from datetime import datetime
 
-
-
-# Konfiguration
 BOT_ID = os.getenv("BOT_ID")
 CHAT_ID = os.getenv("CHAT_ID")
-LOG_FILE = "/your/path/to/log/load_average.log" 
-SLEEP_INTERVAL = 10  # Intervall in Sekunden
+LOG_FILE = "/your/path/to/log/load_average.log"
+SLEEP_TIME = 10  # Проверять каждые 10 секунд
 
-def get_load_average():
-    with open('/proc/loadavg', 'r') as f:
+def get_load():
+    with open("/proc/loadavg") as f:
         load = f.read().split()[0]
     return float(load)
 
-def get_cpu_cores():
+def get_cores():
     return os.cpu_count()
 
-def send_telegram_alert(message):
+def send_alert(text):
     url = f"https://api.telegram.org/bot{BOT_ID}/sendMessage"
-    payload = {
-        "chat_id": CHAT_ID,
-        "text": message
-    }
+    data = {"chat_id": CHAT_ID, "text": text}
     try:
-        response = requests.post(url, data=payload)
-        response.raise_for_status()
-    except Exception as e:
-        print(f"Fehler beim Senden an Telegram: {e}")
+        requests.post(url, data=data)
+    except:
+        print("Fehler beim Senden an Telegram:")
 
-def log_message(msg):
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+def write_log(message):
     with open(LOG_FILE, "a") as f:
-        f.write(f"{timestamp} ---- {msg}\n")
+        f.write(message + "\n")
 
 def monitor():
-    print("🚀 Überwachung gestartet. Überprüfung alle", SLEEP_INTERVAL, "Sekunden.")
+    print("Überwachung gestartet. Überprüfung alle...")
     while True:
-        load = get_load_average()
-        cores = get_cpu_cores()
+        load = get_load()
+        cores = get_cores()
+        msg = f"Load: {load}, Cores: {cores}"
 
         if load >= cores:
-            msg = f"⚠️ Hohe CPU-Auslastung! Aktuelle Last: {load}, CPU-Kerne: {cores}"
-            send_telegram_alert(msg)
-            log_message(f"HOHE LAST: {load}")
+            alert_msg = f"Hohe CPU-Auslastung! Aktuelle Last: {load}"
+            send_alert(alert_msg)
+            write_log(alert_msg)
         else:
-            log_message(f"OK: {load}")
+            write_log(msg)
 
-        time.sleep(SLEEP_INTERVAL)
+        time.sleep(SLEEP_TIME)
 
 if __name__ == "__main__":
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     monitor()
-
-
 
